@@ -3,14 +3,15 @@
 This is a barcode bill handling API.
 
 Install it with the next steps:
-Option 1
+
+Option 1 - local environment
 - pre-reqs: nodejs
 - clone the project
 - run `npm install` in project root
 - run `npm run dev` in project root
 - open our [endpoint documentation](http://localhost:3000/doc)
 
-Option 2
+Option 2 - container
 
 - pre-reqs: docker
 - clone the project
