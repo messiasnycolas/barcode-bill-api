@@ -31,20 +31,23 @@ export function getBillType(lineCode: string): billType {
 }
 
 export function extractTitleBillInfo(lineCode: string): billInfo {
-    validateBlocks(lineCode);
+    validateBlocks(lineCode, 'title');
 
     const barCodeValidator = lineCode[32];
     const expirationFactor = lineCode.substring(33, 37);
     const rawAmount = lineCode.substring(37, 47);
 
-    const spareField1 = lineCode.substring(4, 9);
-    const spareField2 = lineCode.substring(10, 20);
-    const spareField3 = lineCode.substring(21, 31);
-
     const barCode = lineCode.substring(0, 4)
-        .concat(barCodeValidator, expirationFactor, rawAmount, spareField1, spareField2, spareField3);
+        .concat(
+            barCodeValidator,
+            expirationFactor,
+            rawAmount,
+            lineCode.substring(4, 9),
+            lineCode.substring(10, 20),
+            lineCode.substring(21, 31)
+        );
 
-    validateBarCode(barCode);
+    validateBarCode(barCode, 'title');
     const amount = getAmount(rawAmount);
     const expirationDate = getExpirationDate(expirationFactor);
 
@@ -52,36 +55,51 @@ export function extractTitleBillInfo(lineCode: string): billInfo {
 }
 
 export function extractConvenantBillInfo(lineCode: string): billInfo {
-    // ...
-    return { amount: '', expirationDate: '', barCode: '' };
+    validateBlocks(lineCode, 'convenant');
+    const barCode = lineCode.substring(0, 11)
+        .concat(
+            lineCode.substring(12, 23),
+            lineCode.substring(24, 35),
+            lineCode.substring(36, 47)
+        );
+
+    validateBarCode(barCode, 'convenant');
+    const amount = getAmount(barCode.substring(4, 15));
+    const expirationDate = '';
+
+    return { amount, expirationDate, barCode };
 }
 
-export function validateBlocks(lineCode: string): void {
-    const firstBlock = lineCode.substring(0, 10);
-    const secondBlock = lineCode.substring(10, 21);
-    const thirdBlock = lineCode.substring(21, 32);
+export function validateBlocks(lineCode: string, type: billType): void {
+    const blocks: string[] = [];
+    const indexes: [number, number][] = type === 'convenant'
+        ? [[0, 12], [12, 24], [24, 36], [36, 48]]
+        : [[0, 10], [10, 21], [21, 32]];
 
-    if (
-        !blockIsValid(firstBlock)
-        || !blockIsValid(secondBlock)
-        || !blockIsValid(thirdBlock)
-    ) throw new Error('Invalid block detected.');
+    blocks.push(
+        ...indexes.map(([start, end]: [number, number]) => lineCode.substring(start, end)),
+    );
+
+    blocks.map((block) => {
+        if (!blockIsValid(block)) throw new Error('Invalid block detected.');
+    });
 }
 
 export function blockIsValid(block: string) {
     const blockArray = block.split('').reverse();
 
     const foundValidator = blockArray.shift();
-    const calculatedValidator = calculateBlockValidator(blockArray);
+    const calculatedValidator = getMod10Validator(blockArray);
 
     return foundValidator === calculatedValidator;
 }
 
-export function calculateBlockValidator(blockArray: string[]): string {
+export function getMod10Validator(blockArray: string[]): string {
     let blockSum = 0;
     for (let i = 0; i < blockArray.length; i++) {
         const multiplier = (i + 1) % 2 ? 2 : 1;
         const indexMultiplied = +blockArray[i] * multiplier;
+
         blockSum += indexMultiplied > 9
             ? sumDigits(indexMultiplied)
             : indexMultiplied;
@@ -97,31 +115,36 @@ export function sumDigits(num: number): number {
     return (+String(num)[0]) + (+String(num)[1]);
 }
 
-export function validateBarCode(barCode: string): void {
-    const foundValidator = barCode[4];
+export function validateBarCode(barCode: string, type: billType): void {
+    const [foundValidator, barCodeArray] = type === 'convenant'
+        ? [barCode[3], barCode.replace(/(\d{3})(\d)(\d*)/, '$1$3').split('').reverse()]
+        : [barCode[4], barCode.replace(/(\d{4})(\d)(\d*)/, '$1$3').split('').reverse()];
 
-    const barCodeArray = barCode.replace(/(\d{4})(\d)(\d*)/, '$1$3').split('').reverse();
-    const calculatedValidator = calculateBarCodeValidator(barCodeArray);
+    const calculatedValidator = type === 'convenant'
+    ? getMod10Validator(barCodeArray)
+    : getMod11Validator(barCodeArray);
 
-    if (Number(foundValidator) !== calculatedValidator)
+    console.log(type, calculatedValidator, foundValidator);
+    if (foundValidator !== calculatedValidator)
         throw new Error('Generated bar code is invalid. Check the line code.');
 }
 
-export function calculateBarCodeValidator(barCodeArray: string[]): number {
+export function getMod11Validator(barCodeArray: string[]): string {
     let barCodeSum = 0;
-    for(let i = 0, multiplier = 2; i < barCodeArray.length; i++, multiplier++) {
+    for (let i = 0, multiplier = 2; i < barCodeArray.length; i++, multiplier++) {
         if (multiplier > 9) multiplier = 2;
         barCodeSum += +barCodeArray[i] * multiplier;
     }
-    
+
     const calculatedValidator = 11 - (barCodeSum % 11);
+
     switch (calculatedValidator) {
         case 0:
         case 10:
         case 11:
-            return 1;
+            return '1';
         default:
-            return calculatedValidator;
+            return String(calculatedValidator);
     }
 }
 

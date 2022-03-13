@@ -1,4 +1,4 @@
-import { calculateBarCodeValidator, calculateBlockValidator, getAmount, getBillType, getExpirationDate, hasNonNumberCharacters, sumDigits, validateBarCode, validateBlocks } from '../../src/services/bill.service';
+import { getMod11Validator, getMod10Validator, getAmount, getBillType, getExpirationDate, hasNonNumberCharacters, sumDigits, validateBarCode, validateBlocks } from '../../src/services/bill.service';
 
 describe('hasNonNumberCharacters', () => {
     const letters = 'abcdefghijklmnop';
@@ -35,19 +35,19 @@ describe('sumDigits', () => {
     });
 });
 
-describe('calculateBlockValidator', () => {
+describe('getMod10Validator', () => {
     const reverseLineCodeBlock1 = ['0', '0', '0', '0', '0', '9', '1', '0', '0', '0'];
     const reverseLineCodeBlock2 = ['0', '0', '3', '2', '9', '8', '6', '2', '3', '0'];
     const reverseLineCodeBlock3 = ['7', '1', '1', '8', '5', '3', '3', '5', '3', '3'];
 
     it('should calculate the validator digit from a reverse line code block array', () => {
-        expect(calculateBlockValidator(reverseLineCodeBlock1)).toEqual('9');
-        expect(calculateBlockValidator(reverseLineCodeBlock2)).toEqual('4');
-        expect(calculateBlockValidator(reverseLineCodeBlock3)).toEqual('0');
+        expect(getMod10Validator(reverseLineCodeBlock1)).toEqual('9');
+        expect(getMod10Validator(reverseLineCodeBlock2)).toEqual('4');
+        expect(getMod10Validator(reverseLineCodeBlock3)).toEqual('0');
     });
 });
 
-describe('calculateBarCodeValidator', () => {
+describe('getMod11Validator', () => {
     const reverseBarCodeArr1 = ['7', '1', '5', '6', '4', '6', '1', '0', '6', '3', '0', '0', '3', '2',
         '9', '8', '6', '2', '3', '0', '0', '0', '0', '0', '0', '9', '6', '1', '4', '1', '0', '0', '0',
         '0', '0', '6', '2', '9', '8', '9', '1', '0', '0'];
@@ -59,9 +59,9 @@ describe('calculateBarCodeValidator', () => {
         '0', '0', '6', '3', '8', '8', '9', '1', '0', '0'];
 
     it('should return bar code validator digit from a reverse bar code array without validator digit', () => {
-        expect(calculateBarCodeValidator(reverseBarCodeArr1)).toEqual(8);
-        expect(calculateBarCodeValidator(reverseBarCodeArr2)).toEqual(3);
-        expect(calculateBarCodeValidator(reverseBarCodeArr3)).toEqual(1);
+        expect(getMod11Validator(reverseBarCodeArr1)).toEqual('8');
+        expect(getMod11Validator(reverseBarCodeArr2)).toEqual('3');
+        expect(getMod11Validator(reverseBarCodeArr3)).toEqual('1');
     });
 });
 
@@ -90,27 +90,45 @@ describe('getExpirationDate', () => {
 });
 
 describe('validateBlocks', () => {
-    const validLineCodeSample = '00190000090326892300436016465175889260000014169';
+    // title type
+    const validLineCodeSample1 = '00190000090326892300436016465175889260000014169';
     const invalidLineCodeSample1 = '00190000080326892300436016465175889260000014169';
     const invalidLineCodeSample2 = '00190010090326892300436016465175889260000014169';
-
+    // convenant type
+    const validLineCodeSample2 = '836800000017984102222028201100000003000018319319';
+    const invalidLineCodeSample3 = '836900000017984102222028201100000003000018319319';
+    const invalidLineCodeSample4 = '836800000017984102222028201100000003000018319317';
+    
     it('should calculate the validation digit for each line code block and\
     compare with the received ones, throwing an error if they are different', () => {
-        expect(validateBlocks(validLineCodeSample)).toBeUndefined();
-        expect(() => { validateBlocks(invalidLineCodeSample1) }).toThrow(/invalid/i);
-        expect(() => { validateBlocks(invalidLineCodeSample2) }).toThrow(/invalid/i);
+        expect(validateBlocks(validLineCodeSample1, 'title')).toBeUndefined();
+        expect(() => { validateBlocks(invalidLineCodeSample1, 'title') }).toThrow(/invalid/i);
+        expect(() => { validateBlocks(invalidLineCodeSample2, 'title') }).toThrow(/invalid/i);
+
+        expect(validateBlocks(validLineCodeSample2, 'convenant')).toBeUndefined();
+        expect(() => { validateBlocks(invalidLineCodeSample3, 'convenant') }).toThrow(/invalid/i);
+        expect(() => { validateBlocks(invalidLineCodeSample4, 'convenant') }).toThrow(/invalid/i);
     });
 });
 
 describe('validateBarCode', () => {
-    const validBarCodeSample = '00198892600000141690000003268923003601646517';
+    // title type
+    const validBarCodeSample1 = '00198892600000141690000003268923003601646517';
     const invalidBarCodeSample1 = '00190892600000141690000003268923003601646517';
     const invalidBarCodeSample2 = '00198892600000141690000003268923003601646516';
+    // convenant type
+    const validBarCodeSample2 = '83680000001984102222022011000000000001831931';
+    const invalidBarCodeSample3 = '83630000001984102222022011000000000001831931';
+    const invalidBarCodeSample4 = '83684000001984102222022011000000000001831931';
 
     it('should calculate the validation digit and compare with the extracted one,\
     throwing an error if they are different', () => {
-        expect(validateBarCode(validBarCodeSample)).toBeUndefined();
-        expect(() => { validateBarCode(invalidBarCodeSample1) }).toThrow(/invalid/i);
-        expect(() => { validateBarCode(invalidBarCodeSample2) }).toThrow(/invalid/i);
+        expect(validateBarCode(validBarCodeSample1, 'title')).toBeUndefined();
+        expect(() => { validateBarCode(invalidBarCodeSample1, 'title') }).toThrow(/invalid/i);
+        expect(() => { validateBarCode(invalidBarCodeSample2, 'title') }).toThrow(/invalid/i);
+
+        expect(validateBarCode(validBarCodeSample2, 'convenant')).toBeUndefined();
+        expect(() => { validateBarCode(invalidBarCodeSample3, 'convenant') }).toThrow(/invalid/i);
+        expect(() => { validateBarCode(invalidBarCodeSample4, 'convenant') }).toThrow(/invalid/i);
     });
 });
