@@ -124,7 +124,6 @@ export function validateBarCode(barCode: string, type: billType): void {
     ? getMod10Validator(barCodeArray)
     : getMod11Validator(barCodeArray);
 
-    console.log(type, calculatedValidator, foundValidator);
     if (foundValidator !== calculatedValidator)
         throw new Error('Generated bar code is invalid. Check the line code.');
 }
