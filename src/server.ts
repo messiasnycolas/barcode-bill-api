@@ -7,6 +7,6 @@ const app = express();
 app.use(express.json());
 
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(doc))
-app.use('/boleto', billRouter);
+app.use('/billet', billRouter);
 
 export { app };
