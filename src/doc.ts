@@ -11,7 +11,7 @@ export const doc: JsonObject = {
       }
     },
     'paths': {
-      '/boleto': {
+      '/billet/{lineCode}': {
         'get': {
           'tags': [
             'Endpoints'
@@ -22,7 +22,7 @@ export const doc: JsonObject = {
           ],
           'parameters': [
             {
-              'in': 'query',
+              'in': 'path',
               'name': 'line code',
               'description': 'Line Code to extract information',
               'required': true,
