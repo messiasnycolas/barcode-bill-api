@@ -10,7 +10,7 @@ async function getBillInformation(req: Request, res: Response): Promise<void> {
         const lineCode = req.params.lineCode
         if (!lineCode) throw new Error('Empty line code.');
 
-        const billInformation = await billService.getBillInformation(lineCode);
+        const billInformation = billService.getBillInformation(lineCode);
 
         res.status(200).send(billInformation);
     } catch (error) {
