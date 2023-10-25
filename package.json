@@ -4,7 +4,7 @@
   "description": "TS-Node-Express API for handling barcode bills",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "lint": "eslint ./src --ext .ts",
     "lint:fix": "eslint ./src --ext .ts --fix",
     "dev": "ts-node-dev --respawn --transpile-only --exit-child --watch src src/index.ts",
